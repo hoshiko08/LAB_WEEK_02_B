@@ -4,17 +4,31 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
 
 class MainActivity : AppCompatActivity() {
 
-    private val submitButton: Button
-        get() = findViewById(R.id.submit_button)
+    // Launcher to handle result from ResultActivity
+    private val startForResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { activityResult ->
+            val data = activityResult.data
+            val error = data?.getBooleanExtra(ResultActivity.ERROR_KEY, false)
+            if (error == true) {
+                Toast.makeText(
+                    this,
+                    getString(R.string.color_code_input_invalid),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val submitButton: Button = findViewById(R.id.submit_button)
 
         submitButton.setOnClickListener {
             val colorCode =
@@ -28,10 +42,9 @@ class MainActivity : AppCompatActivity() {
                         Toast.LENGTH_LONG
                     ).show()
                 } else {
-                    // ✅ Use ResultActivity.COLOR_KEY instead of a local constant
                     val resultIntent = Intent(this, ResultActivity::class.java)
                     resultIntent.putExtra(ResultActivity.COLOR_KEY, colorCode)
-                    startActivity(resultIntent)
+                    startForResult.launch(resultIntent) // ✅ Use launcher
                 }
             } else {
                 Toast.makeText(
